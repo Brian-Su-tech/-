@@ -1,0 +1,23 @@
+# GPIO 腳位設定
+YELLOW_LED_PIN = 11
+GREEN_LED_PIN = 12
+RED_LED_PIN = 13
+BTN_PIN = 15
+
+# 相機設定
+MODEL_PATH = 'model_unquant.tflite'
+LABELS_PATH = 'labels.txt'
+
+# 辨識設定
+SIMILARITY_THRESHOLD = 0.70
+CAPTURE_TIME = 5.0
+TARGET_FRAMES = 420
+CHECK_INTERVAL = 0.5
+DISPLAY_INTERVAL = 2  # 每2秒顯示一次進度
+
+# Line Notify 設定
+LINE_NOTIFY_TOKEN = "YOUR_LINE_NOTIFY_TOKEN"
+
+# Flask 設定
+FLASK_HOST = "0.0.0.0"
+FLASK_PORT = 5000
