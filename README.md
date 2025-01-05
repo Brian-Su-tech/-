@@ -27,22 +27,25 @@
 - 按鈕: GPIO 15 (BOARD)
 
 ## 檔案結構
-├── main.py # 主程式進入點
-├── config.py # 設定檔
-├── face_recognition_system.py # 人臉辨識系統核心
-├── camera_processor.py # 攝影機處理模組
-├── led_controller.py # LED 控制模組
-├── line_notifier.py # LINE 通知模組
-├── utils.py # 工具函數
-├── face.yml # 人臉模型檔
-├── opencv_test/ # OpenCV 測試和訓練工具
-│ ├── model.py # 訓練模型程式
-│ ├── opencv.py # OpenCV 測試程式
-│ └── process_photos.py # 照片處理工具
-└── captured_photos/ # 擷取的照片儲存位置
-├── brian/ # Brian 的照片
-├── candy/ # Candy 的照片
-└── unknown/ # 未知人員的照片
+
+```
+├── main.py                     # 主程式進入點
+├── config.py                   # 設定檔
+├── face_recognition_system.py  # 人臉辨識系統核心
+├── camera_processor.py         # 攝影機處理模組
+├── led_controller.py          # LED 控制模組
+├── line_notifier.py           # LINE 通知模組
+├── utils.py                   # 工具函數
+├── face.yml                   # 人臉模型檔
+├── opencv_test/               # OpenCV 測試和訓練工具
+│   ├── model.py              # 訓練模型程式
+│   ├── opencv.py             # OpenCV 測試程式
+│   └── process_photos.py     # 照片處理工具
+└── captured_photos/           # 擷取的照片儲存位置
+    ├── brian/                # Brian 的照片
+    ├── candy/                # Candy 的照片
+    └── unknown/              # 未知人員的照片
+```
 
 ## 設定說明
 
