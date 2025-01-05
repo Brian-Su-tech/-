@@ -10,6 +10,8 @@
 - 自動儲存並分類照片
 - 按鈕觸發辨識
 - 網頁介面監控
+- MySQL 資料庫記錄
+- 歷史紀錄查詢功能
 
 ## 硬體需求
 
@@ -35,17 +37,66 @@
 ├── camera_processor.py         # 攝影機處理模組
 ├── led_controller.py          # LED 控制模組
 ├── line_notifier.py           # LINE 通知模組
+├── database.py                # 資料庫操作模組
 ├── utils.py                   # 工具函數
 ├── face.yml                   # 人臉模型檔
-├── opencv_test/               # OpenCV 測試和訓練工具
-│   ├── model.py              # 訓練模型程式
-│   ├── opencv.py             # OpenCV 測試程式
-│   └── process_photos.py     # 照片處理工具
-└── captured_photos/           # 擷取的照片儲存位置
-    ├── brian/                # Brian 的照片
-    ├── candy/                # Candy 的照片
-    └── unknown/              # 未知人員的照片
+├── templates/                 # 網頁模板
+│   ├── index.html            # 首頁模板
+│   └── search.html           # 搜尋結果頁面
+├── static/                   # 靜態檔案
+│   ├── styles.css           # 首頁樣式
+│   ├── styles2.css          # 搜尋頁面樣式
+│   └── photos/              # 擷取的照片儲存位置
+│       ├── brian/           # Brian 的照片
+│       ├── candy/           # Candy 的照片
+│       └── unknown/         # 未知人員的照片
+└── opencv_test/             # OpenCV 測試和訓練工具
+    ├── model.py             # 訓練模型程式
+    ├── opencv.py            # OpenCV 測試程式
+    ├── process_photos.py    # 照片處理工具
+    └── photos/             # 訓練用照片
 ```
+
+## 資料庫設定
+
+1. 安裝 LAMP (Linux + Apache + MySQL + PHP) 環境：
+```bash
+# 安裝 Apache2
+sudo apt install apache2
+
+# 安裝 MySQL
+sudo apt install mysql-server
+
+# 安裝 PHP 和必要模組
+sudo apt install php php-mysql php-common
+
+# 安裝 phpMyAdmin
+sudo apt install phpmyadmin
+```
+
+2. 設定 phpMyAdmin：
+   - 安裝過程中選擇 Apache2
+   - 設定 phpMyAdmin 資料庫管理員密碼
+   - 訪問 `http://你的樹莓派IP/phpmyadmin` 進入管理介面
+
+3. 使用 phpMyAdmin 建立資料庫和表格：
+   - 登入 phpMyAdmin
+   - 建立新資料庫 `face_rec`
+   - 在 SQL 查詢視窗中執行：
+```sql
+CREATE TABLE recognition_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(50),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+4. 建立資料庫使用者：
+   - 在 phpMyAdmin 中前往「使用者帳號」
+   - 新增使用者 'face_user'@'localhost'
+   - 設定密碼為 'user'
+   - 勾選 face_rec 資料庫的所有權限
+   - 點擊「執行」完成設定
 
 ## 設定說明
 
@@ -62,7 +113,7 @@
 
 1. 安裝相依套件：
 ```bash
-pip install opencv-python numpy flask requests RPi.GPIO
+pip install opencv-python numpy flask requests RPi.GPIO mysql-connector-python
 ```
 
 2. 設定 LINE Notify Token：
@@ -78,6 +129,7 @@ python main.py
    - 觀察 LED 燈號狀態
    - 查看 LINE 通知結果
    - 透過網頁介面監控系統
+   - 使用網頁介面查詢歷史紀錄
 
 ## 辨識流程
 
@@ -87,7 +139,15 @@ python main.py
    - 成功：綠色 LED 亮起，LINE 通知顯示辨識到的人名
    - 失敗：紅色 LED 亮起，LINE 通知顯示辨識失敗
 4. 照片自動儲存到對應的資料夾
-5. 10 秒後 LED 熄滅，系統回到待命狀態
+5. 辨識結果記錄到資料庫
+6. 5 秒後 LED 熄滅，系統回到待命狀態
+
+## 網頁介面功能
+
+- 顯示今日訪客數量
+- 查看所有訪客紀錄
+- 依據姓名和時間搜尋歷史照片
+- 即時查看辨識結果
 
 ## 開發工具
 
@@ -101,3 +161,5 @@ python main.py
 - 辨識相似度閾值可在 config.py 中調整
 - 確保攝影機正確連接且運作正常
 - 需要網路連線才能使用 LINE 通知功能
+- 確保 MySQL 服務正常運行
+- 定期備份資料庫和照片資料

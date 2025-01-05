@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles2.css') }}">
+    <title>Search Result</title>
+</head>
+
+<body>
+    <div class="squ">
+        <h1>查詢結果</h1>
+
+        <!-- 使用 Jinja2 語法嵌入傳遞的變數 -->
+        <p>來訪者姓名：{{ name }}</p>
+        <p>來訪時間：{{ time }}</p>
+        <img src="{{ url_for('static', filename='photos/' + name.lower() + '/' + time + '.jpg') }}" alt="來訪者照片"
+            class="responsive-img">
+        <!-- 提供返回首頁的按鈕 -->
+        <a href="/" style="text-decoration: none;">
+            <button>返回首頁</button>
+        </a>
+    </div>
+</body>
+
+</html>

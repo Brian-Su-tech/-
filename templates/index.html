@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Flask Example</title>
+</head>
+<body>
+    <div class="squ">
+        <h1>監控系統</h1>
+        <p style="text-align: center;">本日共有 {{ visitor_count }} 人來訪</p>
+
+        <div class="container">
+            <p style="text-align: center;">查詢來訪人</p>
+            <form action="/search" method="POST" id="my_form">
+                <table>
+                    <tr>
+                        <th><label for="name">Name:</label></th>
+                        <td>
+                            <select id="name" name="name" onchange="updateTimeOptions()">
+                                {% for name in data.keys() %}
+                                <option value="{{ name }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="time">Visited time:</label></th>
+                        <td>
+                            <select id="time" name="time">
+                                <!-- 初始時間選項，根據第一個姓名的時間 -->
+                                {% for time in data[data.keys()|first] %}
+                                <option value="{{ time }}">{{ time }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+                <div class="buttons">
+                    <button type="submit">查詢</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 從後端獲取的資料（以 JSON 格式嵌入）
+        const data = {{ data|tojson }};
+
+        function updateTimeOptions() {
+            // 取得目前選中的姓名
+            const nameSelect = document.getElementById('name');
+            const selectedName = nameSelect.value;
+
+            // 根據選中的姓名，取得對應的時間列表
+            const timeSelect = document.getElementById('time');
+            const times = data[selectedName] || [];
+
+            // 清空時間選項
+            timeSelect.innerHTML = '';
+
+            // 動態加入新的時間選項
+            times.forEach(time => {
+                const option = document.createElement('option');
+                option.value = time;
+                option.textContent = time;
+                timeSelect.appendChild(option);
+            });
+        }
+    </script>
+</body>
+</html>

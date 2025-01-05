@@ -12,18 +12,18 @@ class CameraProcessor:
         self.recognizer.read('face.yml')
         cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
         self.face_cascade = cv2.CascadeClassifier(cascade_path)
-        self.labels = ['???', 'Brian', 'Candy']
+        self.labels = ['unknown', 'Brian', 'Candy']
         
-        # 建立主資料夾
-        self.base_folder = 'captured_photos'
+        # 修改基礎資料夾路徑
+        self.base_folder = os.path.join('static', 'photos')
         if not os.path.exists(self.base_folder):
             os.makedirs(self.base_folder)
             
-        # 建立各人物的子資料夾
+        # 修改各人物子資料夾路徑
         self.person_folders = {
             'Brian': os.path.join(self.base_folder, 'brian'),
             'Candy': os.path.join(self.base_folder, 'candy'),
-            '???': os.path.join(self.base_folder, 'unknown')
+            'unknown': os.path.join(self.base_folder, 'unknown')
         }
         
         # 確保所有子資料夾都存在
@@ -120,7 +120,7 @@ class CameraProcessor:
             final_person_idx = best_person[0]
             final_person_name = self.labels[final_person_idx]
         else:
-            final_person_name = "???"
+            final_person_name = "unknown"
         
         # 儲存影像
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

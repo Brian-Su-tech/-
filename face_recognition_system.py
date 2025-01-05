@@ -57,8 +57,8 @@ class FaceRecognitionSystem:
             self.led.turn_off_yellow()
             self.led.turn_on_red()
             
-        print("\n等待 10 秒...")
-        time.sleep(10)
+        print("\n等待 5 秒繼續操作...")
+        time.sleep(5)
         
         self.led.turn_off_all()
         self.camera.stop_camera()
