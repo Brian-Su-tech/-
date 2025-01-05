@@ -83,6 +83,14 @@ class CameraProcessor:
                             name_idx = 0
                             
                         results.append((name_idx, similarity))
+                        #result會長這樣：
+                        #results = [
+                        #    (1, 0.8),  # (Brian, 80% 相似)
+                        #    (1, 0.7),  # (Brian, 70% 相似)
+                        #    (0, 0.3),  # (Unknown, 30% 相似)
+                        #    (1, 0.85), # (Brian, 85% 相似)
+                        #    (1, 0.75)  # (Brian, 75% 相似)
+                        #]
                         
                         # 如果這是最佳的人臉影像，就保存下來
                         if similarity > best_similarity:
@@ -90,6 +98,7 @@ class CameraProcessor:
                             best_person_idx = name_idx
                             best_face_image = frame.copy()
                         
+                        #顯示辨識結果在影像上
                         text = self.labels[name_idx]
                         cv2.putText(frame, f"{text}", (x,y-5),
                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2, cv2.LINE_AA)
@@ -97,8 +106,9 @@ class CameraProcessor:
                 frame_count += 1
                 last_check_time = current_time
                 
-                if frame_count % DISPLAY_INTERVAL == 0:
-                    elapsed_time = current_time - start_time
+                #顯示擷取影像的進度
+                if frame_count % DISPLAY_INTERVAL == 0:#每2秒顯示一次進度
+                    elapsed_time = current_time - start_time#計算已用時間
                     print(f"已擷取 {frame_count} 張影像，已用時間: {elapsed_time:.1f} 秒")
             
             cv2.imshow('Frame', frame)
@@ -108,14 +118,26 @@ class CameraProcessor:
         
         # 決定最終的辨識結果和儲存位置
         if results:
+            #計算每個人物的相似度統計
             person_stats = {}
             for idx, similarity in results:
                 if idx not in person_stats:
                     person_stats[idx] = []
+                #將相似度加入統計列表
                 person_stats[idx].append(similarity)
+                #person_stats會長這樣：
+                #person_stats = {
+                #    1: [0.8, 0.7, 0.85, 0.75],  # Brian 的相似度列表
+                #    0: [0.3]  # Unknown 的相似度列表
+                #}
             
+
+            #選擇相似度最高的人物
             best_person = max(person_stats.items(), 
                             key=lambda x: (len(x[1]), sum(x[1])/len(x[1])))
+            # 舉例：person_stats = {1: [0.8, 0.7, 0.85, 0.75], 0: [0.3]}
+            # best_person = (1, [0.8, 0.7, 0.85, 0.75])
+
             
             final_person_idx = best_person[0]
             final_person_name = self.labels[final_person_idx]
