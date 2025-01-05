@@ -4,6 +4,7 @@ from led_controller import LEDController
 from camera_processor import CameraProcessor
 from config import BTN_PIN, CHECK_INTERVAL, SIMILARITY_THRESHOLD
 from line_notifier import LineNotifier
+from database import Database
 
 class FaceRecognitionSystem:
     def __init__(self):
@@ -18,6 +19,8 @@ class FaceRecognitionSystem:
         
         # 發送系統啟動訊息
         self.line_notifier.send_startup_message()
+        
+        self.db = Database()
         
     def check_button(self):
         current_time = time.time()
@@ -35,6 +38,9 @@ class FaceRecognitionSystem:
         
         self.camera.start_camera()
         person_name = self.camera.process_frame()
+        
+        # 記錄到資料庫
+        self.db.add_recognition_log(person_name)
         
         print(f"\n辨識到: {person_name}")
         
