@@ -34,28 +34,17 @@ class FaceRecognitionSystem:
         self.line_notifier.send_message("\n🔔 有人按下辨識按鈕！")
         
         self.camera.start_camera()
-        result = self.camera.process_frame()
+        person_name = self.camera.process_frame()
         
-        if result is not None:
-            person_idx, similarity = result
-            similarity_percentage = similarity * 100
-            person_name = self.camera.labels[person_idx]
-            print(f"\n辨識到: {person_name}")
-            print(f"相似度: {similarity_percentage:.1f}%")
-            
-            if similarity >= SIMILARITY_THRESHOLD:
-                message = f"\n✅ 辨識通過\n👤 辨識到: {person_name}\n📊 相似度: {similarity_percentage:.1f}%"
-                self.line_notifier.send_message(message)
-                print(f"辨識結果: {person_name} 通過 ✓")
-                self.led.turn_off_yellow()
-                self.led.turn_on_green()
-            else:
-                message = f"\n❌ 辨識未通過\n👤 辨識到: {person_name}\n📊 相似度: {similarity_percentage:.1f}%"
-                self.line_notifier.send_message(message)
-                print("辨識結果: 未通過 ✗")
-                self.led.turn_off_yellow()
-                self.led.turn_on_red()
-        else:
+        print(f"\n辨識到: {person_name}")
+        
+        if person_name in ["Brian", "Candy"]:  # 如果是已知人物
+            message = f"\n✅ 辨識通過\n👤 辨識到: {person_name}"
+            self.line_notifier.send_message(message)
+            print(f"辨識結果: {person_name} 通過 ✓")
+            self.led.turn_off_yellow()
+            self.led.turn_on_green()
+        else:  # 如果是未知人物（???）
             message = "\n❌ 辨識失敗：未偵測到授權人員"
             self.line_notifier.send_message(message)
             print("\n辨識失敗：未偵測到授權人員")

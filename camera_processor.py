@@ -1,25 +1,36 @@
 import cv2
 import numpy as np
-import tflite_runtime.interpreter as tflite
 import time
-from config import MODEL_PATH, LABELS_PATH, TARGET_FRAMES, CAPTURE_TIME, DISPLAY_INTERVAL
+import os
+from datetime import datetime
+from config import CAPTURE_TIME, TARGET_FRAMES, DISPLAY_INTERVAL
 
 class CameraProcessor:
-    def __init__(self, model_path=MODEL_PATH):
+    def __init__(self):
         self.cap = None
-        self.interpreter = self.load_model(model_path)
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
+        self.recognizer.read('face.yml')
+        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        self.face_cascade = cv2.CascadeClassifier(cascade_path)
+        self.labels = ['???', 'Brian', 'Candy']
         
-        # 載入標籤
-        with open(LABELS_PATH, 'r') as f:
-            self.labels = [line.strip().split()[1] for line in f.readlines()]
+        # 建立主資料夾
+        self.base_folder = 'captured_photos'
+        if not os.path.exists(self.base_folder):
+            os.makedirs(self.base_folder)
+            
+        # 建立各人物的子資料夾
+        self.person_folders = {
+            'Brian': os.path.join(self.base_folder, 'brian'),
+            'Candy': os.path.join(self.base_folder, 'candy'),
+            '???': os.path.join(self.base_folder, 'unknown')
+        }
         
-    def load_model(self, model_path):
-        interpreter = tflite.Interpreter(model_path=model_path)
-        interpreter.allocate_tensors()
-        return interpreter
-        
+        # 確保所有子資料夾都存在
+        for folder in self.person_folders.values():
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+                
     def start_camera(self):
         self.cap = cv2.VideoCapture(0)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -29,20 +40,20 @@ class CameraProcessor:
         if self.cap:
             self.cap.release()
             
-    def preprocess(self, frame):
-        resized = cv2.resize(frame, (224, 224))
-        normalized = resized.astype(np.float32) / 255.0
-        return np.expand_dims(normalized, axis=0)
-            
     def process_frame(self):
-        similarities = []
+        results = []
         frame_count = 0
+        check_interval = 0.5
         
-        interval = CAPTURE_TIME / TARGET_FRAMES
+        # 記錄最佳影像（不論是否偵測到人臉）
+        best_image = None
+        best_face_image = None
+        best_similarity = 0
+        best_person_idx = 0  # 預設為未知人物（索引0）
         
         print("\n開始擷取影像...")
         start_time = time.time()
-        last_capture_time = start_time
+        last_check_time = start_time
         
         while frame_count < TARGET_FRAMES and (time.time() - start_time) <= CAPTURE_TIME:
             ret, frame = self.cap.read()
@@ -50,13 +61,41 @@ class CameraProcessor:
                 continue
                 
             current_time = time.time()
-            if current_time - last_capture_time >= interval:
-                processed_data = self.preprocess(frame)
-                similarity = self.calculate_similarity(processed_data)
-                if similarity is not None:
-                    similarities.append(similarity)
+            if current_time - last_check_time >= check_interval:
+                frame = cv2.resize(frame, (540, 300))
+                # 保存第一張影像作為備用
+                if best_image is None:
+                    best_image = frame.copy()
+                    
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = self.face_cascade.detectMultiScale(gray)
+                
+                if len(faces) > 0:  # 如果偵測到人臉
+                    for (x, y, w, h) in faces:
+                        cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
+                        
+                        id_num, confidence = self.recognizer.predict(gray[y:y+h, x:x+w])
+                        similarity = (100 - min(confidence, 100)) / 100
+                        
+                        if confidence < 60:
+                            name_idx = id_num
+                        else:
+                            name_idx = 0
+                            
+                        results.append((name_idx, similarity))
+                        
+                        # 如果這是最佳的人臉影像，就保存下來
+                        if similarity > best_similarity:
+                            best_similarity = similarity
+                            best_person_idx = name_idx
+                            best_face_image = frame.copy()
+                        
+                        text = self.labels[name_idx]
+                        cv2.putText(frame, f"{text}", (x,y-5),
+                                  cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2, cv2.LINE_AA)
+                
                 frame_count += 1
-                last_capture_time = current_time
+                last_check_time = current_time
                 
                 if frame_count % DISPLAY_INTERVAL == 0:
                     elapsed_time = current_time - start_time
@@ -66,58 +105,32 @@ class CameraProcessor:
             cv2.waitKey(1)
         
         cv2.destroyAllWindows()
-        total_elapsed = time.time() - start_time
-        print(f"\n擷取完成，共 {frame_count} 張影像，總用時: {total_elapsed:.1f} 秒")
         
-        if similarities:
-            person_indices = [s[0] for s in similarities]
-            similarity_values = [s[1] for s in similarities]
-            
+        # 決定最終的辨識結果和儲存位置
+        if results:
             person_stats = {}
-            for idx in set(person_indices):
-                values = [v for i, v in enumerate(similarity_values) if person_indices[i] == idx]
-                sorted_values = sorted(values)
-                cut_size = len(sorted_values) // 10
-                trimmed_values = sorted_values[cut_size:-cut_size]
-                
-                person_stats[idx] = {
-                    'count': len(values),
-                    'avg_similarity': np.mean(trimmed_values) if trimmed_values else 0
-                }
+            for idx, similarity in results:
+                if idx not in person_stats:
+                    person_stats[idx] = []
+                person_stats[idx].append(similarity)
             
             best_person = max(person_stats.items(), 
-                            key=lambda x: (x[1]['count'], x[1]['avg_similarity']))
+                            key=lambda x: (len(x[1]), sum(x[1])/len(x[1])))
             
-            return (best_person[0], best_person[1]['avg_similarity'])
+            final_person_idx = best_person[0]
+            final_person_name = self.labels[final_person_idx]
         else:
-            print("沒有有效的相似度數據")
-            return None
+            final_person_name = "???"
         
-    def calculate_similarity(self, processed_data):
-        self.interpreter.set_tensor(self.input_details[0]['index'], processed_data)
-        self.interpreter.invoke()
-        prediction = self.interpreter.get_tensor(self.output_details[0]['index'])[0]
+        # 儲存影像
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_image = best_face_image if best_face_image is not None else best_image
         
-        brian_idx = self.labels.index('Brian')
-        candy_idx = self.labels.index('Candy')
+        # 根據最終辨識結果選擇儲存資料夾
+        save_folder = self.person_folders[final_person_name]
+        filename = f"{timestamp}.jpg"
+        filepath = os.path.join(save_folder, filename)
+        cv2.imwrite(filepath, save_image)
+        print(f"已儲存影像到 {final_person_name} 資料夾：{filename}")
         
-        brian_score = prediction[brian_idx]
-        candy_score = prediction[candy_idx]
-        
-        print(f"Brian: {brian_score*100:.1f}%")
-        print(f"Candy: {candy_score*100:.1f}%")
-        
-        if brian_score > candy_score:
-            best_score = brian_score
-            best_idx = brian_idx
-        else:
-            best_score = candy_score
-            best_idx = candy_idx
-        
-        other_scores = [score for i, score in enumerate(prediction) if i not in [brian_idx, candy_idx]]
-        if best_score > 0.5 and best_score > max(other_scores) * 1.2:
-            print(f"\n偵測到 {self.labels[best_idx]}，相似度: {best_score*100:.1f}%")
-            return (best_idx, best_score)
-        else:
-            print("\n未偵測到授權人員")
-            return None
+        return final_person_name
