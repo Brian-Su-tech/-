@@ -18,7 +18,7 @@ def rename_photos(folder_path):
     # 重新命名檔案
     for index, photo in enumerate(photo_files, start=1):
         # 建立新檔名
-        new_name = f"candy_{index:02d}.jpeg"
+        new_name = f"brian_{index:02d}.jpg"
         new_path = os.path.join(folder_path, new_name)
         
         try:
@@ -29,5 +29,5 @@ def rename_photos(folder_path):
 
 if __name__ == "__main__":
     # 指定 photos 資料夾的路徑
-    photos_folder = "photos/candy"
+    photos_folder = "opencv_test/photos/brian"
     rename_photos(photos_folder)

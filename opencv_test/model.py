@@ -17,7 +17,7 @@ ids = []
 
 # 讀取 brian 的照片（01-15）
 for i in range(1, 16):
-    img = cv2.imread(f'photos/brian/brian_{i:02d}.jpeg')  # 使用 :02d 確保數字格式為 01, 02, ...
+    img = cv2.imread(f'opencv_test/photos/brian/brian_{i:02d}.jpg')  # 使用 :02d 確保數字格式為 01, 02, ...
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 色彩轉換成黑白
     img_np = np.array(gray,'uint8')               # 轉換成指定編碼的 numpy 陣列
     face = detector.detectMultiScale(gray)        # 擷取人臉區域
@@ -27,7 +27,7 @@ for i in range(1, 16):
 
 # 讀取 trump 的照片（01-12）
 for i in range(1, 13):
-    img = cv2.imread(f'photos/candy/candy_{i:02d}.jpeg')  # 使用 :02d 確保數字格式為 01, 02, ...
+    img = cv2.imread(f'opencv_test/photos/candy/candy_{i:02d}.jpg')  # 使用 :02d 確保數字格式為 01, 02, ...
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 色彩轉換成黑白
     img_np = np.array(gray,'uint8')               # 轉換成指定編碼的 numpy 陣列
     face = detector.detectMultiScale(gray)        # 擷取人臉區域
